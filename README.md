@@ -120,7 +120,8 @@ claude-gmail-slack-notifier/
 │       ├── mail-setup.md      # /mail-setup セットアップウィザード
 │       └── mail-check.md      # /mail-check 手動チェック
 ├── gas/
-│   └── Code.gs                # GAS Web App ソースコード（ワンクリック下書き用）
+│   ├── Code.gs                # GAS Web App ソースコード（ワンクリック下書き用）
+│   └── appsscript.json        # GAS プロジェクト設定（OAuthスコープ等）
 ├── .gitignore
 ├── README.md
 ├── config.json                # メールフィルタ設定（自動生成、gitignore対象）
@@ -135,11 +136,13 @@ Google Apps Script（GAS）を使って、Slackの「下書き作成」ボタン
 
 1. [Google Apps Script](https://script.google.com) で新しいプロジェクトを作成
 2. `gas/Code.gs` の内容を貼り付け
-3. スクリプトプロパティに `AUTH_TOKEN`（任意のランダム文字列）を設定
+3. `appsscript.json` を `gas/appsscript.json` の内容に置き換え（プロジェクト設定で「マニフェストファイルをエディタで表示する」を有効にする）
 4. ウェブアプリとしてデプロイ（「自分として実行」「全員がアクセス可能」）
-5. デプロイURLと AUTH_TOKEN を `config.json` の `gasWebAppUrl` / `gasAuthToken` に設定
+5. 初回のGmail権限承認を完了
+6. デプロイURL末尾に `?action=setup&token=（任意のランダム文字列）` を付けてブラウザで開き、AUTH_TOKENを設定
+7. デプロイURLとトークンを `config.json` の `gasWebAppUrl` / `gasAuthToken` に設定
 
-返信案データは GAS の PropertiesService に保持され、ボタン押下時に消費されるワンタイム方式。3日で自動期限切れ。
+返信案データは GAS の PropertiesService に保持され、確認ページを経由してワンタイム消費。3日で自動期限切れ。
 
 ## 制約
 
