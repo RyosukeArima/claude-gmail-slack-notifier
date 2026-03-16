@@ -32,6 +32,10 @@ function doGet(e) {
     return handleCreateDraft(e);
   }
 
+  if (action === 'execDraft') {
+    return execDraft(e);
+  }
+
   return htmlResponse('無効なリクエストです。', false);
 }
 
@@ -61,7 +65,7 @@ function handleSave(e) {
       return htmlResponse('idパラメータが必要です。', false);
     }
 
-    var payload = JSON.parse(Utilities.newBlob(Utilities.base64Decode(dataB64)).getDataAsString());
+    var payload = JSON.parse(Utilities.newBlob(Utilities.base64Decode(dataB64)).getDataAsString('UTF-8'));
 
     props.setProperty(uuid, JSON.stringify({
       messageId: payload.messageId,
@@ -82,7 +86,46 @@ function handleSave(e) {
 // ---------------------------------------------------------------------------
 // createDraft: Slack ボタン → 下書き作成 → プロパティ削除
 // ---------------------------------------------------------------------------
+// createDraft: 確認ページを表示（Slackのunfurl対策）
 function handleCreateDraft(e) {
+  var uuid = (e.parameter.id || '').toString();
+
+  if (!uuid) {
+    return htmlResponse('IDが指定されていません。', false);
+  }
+
+  var props = PropertiesService.getScriptProperties();
+  var raw = props.getProperty(uuid);
+
+  if (!raw) {
+    return htmlResponse('このリンクは既に使用済みか、存在しません。', false);
+  }
+
+  var data = JSON.parse(raw);
+  var execUrl = ScriptApp.getService().getUrl() + '?action=execDraft&id=' + uuid;
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>Gmail Draft Creator</title>'
+    + '<style>'
+    + 'body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f6f8fa;}'
+    + '.card{background:#fff;border-radius:12px;padding:32px;max-width:480px;width:90%;box-shadow:0 1px 3px rgba(0,0,0,.12);}'
+    + '.subject{font-size:16px;font-weight:bold;color:#24292f;margin-bottom:12px;}'
+    + '.body{font-size:14px;color:#57606a;line-height:1.6;background:#f6f8fa;padding:12px;border-radius:8px;margin-bottom:20px;white-space:pre-wrap;}'
+    + '.btn{display:block;width:100%;padding:12px;background:#2ea44f;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;text-align:center;text-decoration:none;}'
+    + '.btn:hover{background:#2c974b;}'
+    + '</style></head><body>'
+    + '<div class="card">'
+    + '<div class="subject">Re: ' + escapeHtml(data.subject) + '</div>'
+    + '<div class="body">' + escapeHtml(data.replyBody).replace(/\\n/g, '\n') + '</div>'
+    + '<a class="btn" href="' + execUrl + '">この内容で下書きを作成する</a>'
+    + '</div></body></html>';
+
+  return HtmlService.createHtmlOutput(html);
+}
+
+// execDraft: 実際に下書きを作成
+function execDraft(e) {
   var uuid = (e.parameter.id || '').toString();
 
   if (!uuid) {
