@@ -1,6 +1,4 @@
 {
   "gmailQuery": "is:unread -category:promotions -category:social -category:updates -category:forums",
-  "cronMinute": 55,
-  "gasWebAppUrl": "",
-  "gasAuthToken": ""
+  "cronMinute": 55
 }
